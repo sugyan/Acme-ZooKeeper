@@ -35,6 +35,7 @@ auto_set_repository;
 tests_recursive;
 author_tests 'xt';
 
+install_script 'scripts/zookeeper.pl';
 
 clean_files qw(
     Acme-ZooKeeper-*

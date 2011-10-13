@@ -5,6 +5,13 @@ use warnings;
 
 our $VERSION = '0.01';
 
+sub new {
+    my ($class) = @_;
+    return bless {}, $class;
+}
+
+sub play {
+}
 
 1;
 __END__

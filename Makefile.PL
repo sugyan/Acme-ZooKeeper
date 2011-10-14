@@ -26,6 +26,8 @@ use inc::Module::Install;
 
 all_from 'lib/Acme/ZooKeeper.pm';
 
+requires      'Term::Screen'    => '1.03';
+requires      'Term::ANSIColor' => '3.01';
 
 test_requires 'Test::More'     => '0.88';
 test_requires 'Test::Requires' => '0.06';

@@ -24,22 +24,63 @@ sub new {
 
 sub play {
     my ($self) = @_;
+    $self->{screen}->clrscr;
     $self->_setup_stage;
     $self->_display;
 
     while ((my $c = $self->{screen}->getch) ne 'q') {
         given ($c) {
-            when (/h/i) {
-                $self->{cursor}[1]-- if $self->{cursor}[1] > 0;
+            when ('h') {
+                if ($self->{cursor}[1] > 0) {
+                    if ($self->{marked}) {
+                        $self->_swap($self->{cursor}[0], $self->{cursor}[1] - 1);
+                    }
+                    else {
+                        $self->{cursor}[1]--;
+                    }
+                }
+                $self->{marked} = 0;
             }
-            when (/j/i) {
-                $self->{cursor}[0]++ if $self->{cursor}[0] < 7;
+            when ('j') {
+                if ($self->{cursor}[0] < 7) {
+                    if ($self->{marked}) {
+                        $self->_swap($self->{cursor}[0] + 1, $self->{cursor}[1]);
+                    }
+                    else {
+                        $self->{cursor}[0]++;
+                    }
+                }
+                $self->{marked} = 0;
             }
-            when (/k/i) {
-                $self->{cursor}[0]-- if $self->{cursor}[0] > 0;
+            when ('k') {
+                if ($self->{cursor}[0] > 0) {
+                    if ($self->{marked}) {
+                        $self->_swap($self->{cursor}[0] - 1, $self->{cursor}[1]);
+                    }
+                    else {
+                        $self->{cursor}[0]--;
+                    }
+                }
+                $self->{marked} = 0;
             }
-            when (/l/i) {
-                $self->{cursor}[1]++ if $self->{cursor}[1] < 7;
+            when ('l') {
+                if ($self->{cursor}[1] < 7) {
+                    if ($self->{marked}) {
+                        $self->_swap($self->{cursor}[0], $self->{cursor}[1] + 1);
+                    }
+                    else {
+                        $self->{cursor}[1]++;
+                    }
+                }
+                $self->{marked} = 0;
+            }
+            when (/ /) {
+                if ($self->{marked}) {
+                    $self->{marked} = 0;
+                }
+                else {
+                    $self->{marked} = 1;
+                }
             }
         }
         $self->_display;
@@ -59,7 +100,6 @@ sub _setup_stage {
 sub _display {
     my ($self) = @_;
 
-    $self->{screen}->clrscr;
     for my $row (1 .. 8) {
         for my $col (1 .. 8) {
             my $num = $self->{stage}[$row - 1][$col - 1];
@@ -72,7 +112,7 @@ sub _display {
         }
     }
     $self->{screen}->at($self->{screen}->rows, $self->{screen}->cols);
-    $self->_check;
+    return $self->_check;
 }
 
 sub _check {
@@ -113,6 +153,24 @@ sub _check {
             $self->{stage}[$d->[0]][$d->[1]] = -1;
         }
         $self->_display;
+    }
+
+    return @deleted;
+}
+
+sub _swap {
+    my ($self, $row, $col) = @_;
+
+    my $tmp = $self->{stage}[$self->{cursor}[0]][$self->{cursor}[1]];
+    $self->{stage}[$self->{cursor}[0]][$self->{cursor}[1]] = $self->{stage}[$row][$col];
+    $self->{stage}[$row][$col] = $tmp;
+
+    my $deleted = $self->_display;
+    if (! $deleted) {
+        sleep 0.1;
+        # back
+        $self->{stage}[$row][$col] = $self->{stage}[$self->{cursor}[0]][$self->{cursor}[1]];
+        $self->{stage}[$self->{cursor}[0]][$self->{cursor}[1]] = $tmp;
     }
 }
 

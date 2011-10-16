@@ -2,9 +2,10 @@ package Acme::ZooKeeper;
 use strict;
 use warnings;
 
+use feature 'switch';
 use Term::Screen;
 use Term::ANSIColor;
-use feature 'switch';
+use Time::HiRes 'sleep';
 
 our $VERSION = '0.01';
 
@@ -13,8 +14,8 @@ sub new {
 
     my $self = +{
         screen  => Term::Screen->new,
-        colors  => ['RED', 'GREEN', 'YELLOW', 'BLUE', 'MAGENTA', 'CYAN', 'WHITE'],
-        animals => ['猿',  '鰐',    '虎',     '鯨',   '豚',      '象',   '兎'   ],
+        colors  => ['RED',    'GREEN',  'YELLOW', 'BLUE',   'MAGENTA', 'CYAN',   'WHITE'],
+        animals => ['猿',     '鰐',     '虎',     '鯨',     '豚',      '象',     '兎'   ],
         cursor  => [0, 0],
         %opts,
     };
@@ -50,7 +51,7 @@ sub _setup_stage {
 
     for my $i (1 .. 8) {
         for my $j (1 .. 8) {
-            $self->{stage}[$i - 1][$j - 1] = int(rand 7);
+            $self->{stage}[$i - 1][$j - 1] = -1;
         }
     }
 }
@@ -59,17 +60,60 @@ sub _display {
     my ($self) = @_;
 
     $self->{screen}->clrscr;
-    for my $i (1 .. 8) {
-        for my $j (1 .. 8) {
-            my $num = $self->{stage}[$i - 1][$j - 1];
+    for my $row (1 .. 8) {
+        for my $col (1 .. 8) {
+            my $num = $self->{stage}[$row - 1][$col - 1];
             my $color = [
+                'BOLD',
                 $self->{colors}[$num],
-                ($self->{cursor}[0] == $i - 1 && $self->{cursor}[1] == $j - 1) ? 'ON_BRIGHT_BLACK' : 'ON_BLACK',
+                ($self->{cursor}[0] == $row - 1 && $self->{cursor}[1] == $col - 1) ? 'ON_BRIGHT_BLACK' : 'ON_BLACK',
             ];
-            $self->{screen}->at($i - 1, ($j - 1) * 2)->puts(colored($color, $self->{animals}[$num]));
+            $self->{screen}->at($row - 1, ($col - 1) * 2)->puts(colored($color, $num == -1 ? '　' : $self->{animals}[$num]));
         }
     }
     $self->{screen}->at($self->{screen}->rows, $self->{screen}->cols);
+    $self->_check;
+}
+
+sub _check {
+    my ($self) = @_;
+
+    my $updated = 0;
+    my @deleted = ();
+    for my $row (reverse 1 .. 8) {
+        for my $col (reverse 1 .. 8) {
+            my $num = $self->{stage}[$row - 1][$col - 1];
+            if ($num == -1) {
+                $updated = 1;
+                if ($row == 1) {
+                    $self->{stage}[$row - 1][$col - 1] = int(rand 7);
+                }
+                else {
+                    $self->{stage}[$row - 1][$col - 1] = $self->{stage}[$row - 2][$col - 1];
+                    $self->{stage}[$row - 2][$col - 1] = -1;
+                }
+            }
+            if ($col < 7 &&
+                    $num == $self->{stage}[$row - 1][$col + 0] && $num == $self->{stage}[$row - 1][$col + 1]) {
+                push @deleted, [$row - 1, $col - 1], [$row - 1, $col + 0], [$row - 1, $col + 1];
+            }
+            if ($row < 7 &&
+                    $num == $self->{stage}[$row + 0][$col - 1] && $num == $self->{stage}[$row + 1][$col - 1]) {
+                push @deleted, [$row - 1, $col - 1], [$row + 0, $col - 1], [$row + 1, $col - 1];
+            }
+        }
+    }
+
+    if ($updated) {
+        sleep 0.1;
+        $self->_display;
+    }
+    elsif (@deleted) {
+        for my $d (@deleted) {
+            $self->{stage}[$d->[0]][$d->[1]] = -1;
+        }
+        $self->_display;
+    }
 }
 
 1;

@@ -188,10 +188,11 @@ This document describes Acme::ZooKeeper version 0.01.
 =head1 SYNOPSIS
 
     use Acme::ZooKeeper;
+    Acme::Zookeeper->new->play;
 
 =head1 DESCRIPTION
 
-# TODO
+    use keyboard. 'h', 'j', 'k', 'l' for moving cursor. space key for swapping. 'q' for quit.
 
 =head1 INTERFACE
 
@@ -203,7 +204,7 @@ This document describes Acme::ZooKeeper version 0.01.
 
 =head1 DEPENDENCIES
 
-Perl 5.8.1 or later.
+Perl 5.10.1 or later.
 
 =head1 BUGS
 
